@@ -28,7 +28,7 @@ const apiFetch = async (path, apiKey) => {
 };
 
 const resolveLeagueId = (settings) => {
-  if (settings?.leagueMode === "mix" && Array.isArray(settings.leagues) && settings.leagues.length) {
+  if (Array.isArray(settings?.leagues) && settings.leagues.length) {
     const index = Math.floor(Math.random() * settings.leagues.length);
     return settings.leagues[index];
   }

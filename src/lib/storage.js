@@ -9,6 +9,7 @@ export const defaultState = {
     dailyPacksOpened: 0,
     adminGrantedPacks: 0,
     purchasedPacks: 0,
+    heroPacks: 0,
     tokens: 200,
     lastDailyReset: todayISO(),
   },
@@ -19,7 +20,7 @@ export const defaultState = {
   countryFlags: {},
   settings: {
     league: 39,
-    leagues: [39, 140, 78, 135, 61, 94],
+    leagues: [39, 140, 78, 61, 113],
     leagueMode: "mix",
     season: latestSeasonYear(),
     autoSeason: true,
@@ -68,6 +69,8 @@ export const getAvailablePacks = (inventory) => {
   return dailyLeft + inventory.adminGrantedPacks + inventory.purchasedPacks;
 };
 
+export const getHeroPacks = (inventory) => inventory.heroPacks ?? 0;
+
 export const consumePack = (inventory) => {
   if (inventory.purchasedPacks > 0) {
     return { ...inventory, purchasedPacks: inventory.purchasedPacks - 1 };
@@ -76,4 +79,11 @@ export const consumePack = (inventory) => {
     return { ...inventory, adminGrantedPacks: inventory.adminGrantedPacks - 1 };
   }
   return { ...inventory, dailyPacksOpened: inventory.dailyPacksOpened + 1 };
+};
+
+export const consumeHeroPack = (inventory) => {
+  if (inventory.heroPacks > 0) {
+    return { ...inventory, heroPacks: inventory.heroPacks - 1 };
+  }
+  return inventory;
 };

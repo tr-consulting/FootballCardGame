@@ -4,13 +4,16 @@ import { formations } from "./lib/formations";
 import { buildMockCards, mockStadiums } from "./lib/mockData";
 import { fetchCountriesFromApi, fetchPlayersFromApi, fetchStadiumsFromApi, getApiKey } from "./lib/apiFootball";
 import { computeOverall, positionWeights } from "./lib/ratings";
+import { buildHeroCards, heroPackCostTokens } from "./lib/heroes";
 import {
   defaultState,
   ensureDailyReset,
   getAvailablePacks,
+  getHeroPacks,
   loadState,
   saveState,
   consumePack,
+  consumeHeroPack,
 } from "./lib/storage";
 import { formatNumber, latestSeasonYear } from "./lib/utils";
 import { packCostTokens, rewardTokens } from "./lib/economy";
@@ -268,6 +271,25 @@ export default function App() {
     }
   };
 
+  const openHeroPack = () => {
+    setError("");
+    setMessage("");
+    if ((state.inventory.heroPacks ?? 0) <= 0) {
+      setError("No Hero packs available yet.");
+      return;
+    }
+    const heroCards = buildHeroCards(12);
+    updateState({
+      inventory: {
+        ...consumeHeroPack(state.inventory),
+        cards: [...heroCards, ...state.inventory.cards],
+      },
+    });
+    setLastOpenedCards(heroCards);
+    setShowPackReveal(true);
+    setMessage("Hero pack opened! Legendary cards unlocked.");
+  };
+
   const buyPack = () => {
     if (state.inventory.tokens < packCostTokens) {
       setError("Not enough tokens yet.");
@@ -281,6 +303,21 @@ export default function App() {
       },
     });
     setMessage("Pack bought! Ready to open.");
+  };
+
+  const buyHeroPack = () => {
+    if (state.inventory.tokens < heroPackCostTokens) {
+      setError("Not enough tokens for a Hero pack.");
+      return;
+    }
+    updateState({
+      inventory: {
+        ...state.inventory,
+        tokens: state.inventory.tokens - heroPackCostTokens,
+        heroPacks: (state.inventory.heroPacks ?? 0) + 1,
+      },
+    });
+    setMessage("Hero pack bought! Open it when you're ready.");
   };
 
   const createNewTeam = () => {
@@ -442,6 +479,7 @@ export default function App() {
   );
 
   const availablePacks = getAvailablePacks(state.inventory);
+  const heroPacks = getHeroPacks(state.inventory);
 
   return (
     <div className="app">
@@ -509,6 +547,16 @@ export default function App() {
             </div>
             <button disabled={loading} onClick={openPack}>
               {loading ? "Opening..." : "Open Pack"}
+            </button>
+          </div>
+          <div className="pack-area">
+            <div className="pack hero-pack">
+              <span>12 Heroes</span>
+              <strong>Hero Pack</strong>
+              <small>{heroPacks} available</small>
+            </div>
+            <button disabled={heroPacks === 0} onClick={openHeroPack}>
+              Open Hero Pack
             </button>
           </div>
           {renderRatingFormula()}
@@ -1013,6 +1061,12 @@ export default function App() {
               <div className="price">{packCostTokens} tokens</div>
               <button onClick={buyPack}>Buy Pack</button>
             </div>
+            <div className="shop-card hero-pack-card">
+              <h3>Hero Pack</h3>
+              <p>Only legendary Heroes (85-89 OVR).</p>
+              <div className="price">{heroPackCostTokens} tokens</div>
+              <button onClick={buyHeroPack}>Buy Hero Pack</button>
+            </div>
           </div>
         </section>
       )}
@@ -1061,43 +1115,9 @@ export default function App() {
                   onBlur={(event) => localStorage.setItem("footballApiKey", event.target.value)}
                 />
               </label>
-              <label className="toggle">
-                <input
-                  type="checkbox"
-                  checked={state.settings.leagueMode === "mix"}
-                  onChange={(event) =>
-                    updateState({
-                      settings: {
-                        ...state.settings,
-                        leagueMode: event.target.checked ? "mix" : "single",
-                      },
-                    })
-                  }
-                />
-                Mix leagues
-              </label>
               <label>
-                League ID
-                <input
-                  type="number"
-                  value={state.settings.league}
-                  onChange={(event) => updateState({ settings: { ...state.settings, league: Number(event.target.value) } })}
-                />
-              </label>
-              <label>
-                League IDs (comma separated)
-                <input
-                  defaultValue={state.settings.leagues.join(",")}
-                  onBlur={(event) => {
-                    const value = event.target.value
-                      .split(",")
-                      .map((item) => Number(item.trim()))
-                      .filter((item) => Number.isFinite(item));
-                    if (value.length) {
-                      updateState({ settings: { ...state.settings, leagues: value } });
-                    }
-                  }}
-                />
+                Leagues (fixed)
+                <input value="Premier League, La Liga, Bundesliga, Ligue 1, Allsvenskan" disabled />
               </label>
               <label className="toggle">
                 <input

@@ -156,6 +156,17 @@
   transform-origin: center;
 }
 
+.pack.hero-pack {
+  background: linear-gradient(160deg, #ffd166, #ef476f);
+  box-shadow: 0 12px 28px rgba(239, 71, 111, 0.35);
+}
+
+.pack.hero-pack small {
+  margin-top: 6px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
 .pack.opening {
   animation: bounce 0.8s infinite alternate;
 }
