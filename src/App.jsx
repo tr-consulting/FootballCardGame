@@ -1097,6 +1097,18 @@ export default function App() {
                   updateState({
                     inventory: {
                       ...state.inventory,
+                      heroPacks: (state.inventory.heroPacks ?? 0) + 1,
+                    },
+                  })
+                }
+              >
+                Grant 1 Hero Pack
+              </button>
+              <button
+                onClick={() =>
+                  updateState({
+                    inventory: {
+                      ...state.inventory,
                       dailyPacksOpened: 0,
                     },
                   })
