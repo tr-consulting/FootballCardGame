@@ -130,3 +130,16 @@ export const fetchStadiumsFromApi = async (settings) => {
     };
   });
 };
+
+export const fetchCountriesFromApi = async () => {
+  const apiKey = getApiKey();
+  const data = await apiFetch("/countries", apiKey);
+  const countries = data?.response ?? [];
+  const map = {};
+  countries.forEach((country) => {
+    if (country?.name && country?.flag) {
+      map[country.name] = country.flag;
+    }
+  });
+  return map;
+};

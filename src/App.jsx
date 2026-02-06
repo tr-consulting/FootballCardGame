@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Card from "./components/Card";
 import { formations } from "./lib/formations";
 import { buildMockCards, mockStadiums } from "./lib/mockData";
-import { fetchPlayersFromApi, fetchStadiumsFromApi, getApiKey } from "./lib/apiFootball";
+import { fetchCountriesFromApi, fetchPlayersFromApi, fetchStadiumsFromApi, getApiKey } from "./lib/apiFootball";
 import { computeOverall, positionWeights } from "./lib/ratings";
 import {
   defaultState,
@@ -136,6 +136,12 @@ export default function App() {
     }
   }, [state.stadiums.length, state.settings.useLiveApi]);
 
+  useEffect(() => {
+    if (!state.settings.useLiveApi) return;
+    if (Object.keys(state.countryFlags).length > 0) return;
+    fetchCountries();
+  }, [state.settings.useLiveApi, state.countryFlags]);
+
   const updateState = (patch) => {
     setState((prev) => ensureDailyReset({ ...prev, ...patch }));
   };
@@ -156,6 +162,17 @@ export default function App() {
     }
   };
 
+  const fetchCountries = async () => {
+    try {
+      const flags = await fetchCountriesFromApi();
+      if (Object.keys(flags).length) {
+        updateState({ countryFlags: flags });
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
   const openPack = async () => {
     setError("");
     setMessage("");
@@ -172,26 +189,34 @@ export default function App() {
       const cards = state.settings.useLiveApi
         ? await fetchPlayersFromApi({ ...state.settings, season, count: 12 })
         : buildMockCards();
+      const cardsWithFlags = cards.map((card) => ({
+        ...card,
+        countryFlag: card.countryFlag ?? state.countryFlags[card.country],
+      }));
 
       updateState({
         inventory: {
           ...consumePack(state.inventory),
-          cards: [...cards, ...state.inventory.cards],
+          cards: [...cardsWithFlags, ...state.inventory.cards],
         },
       });
-      setLastOpenedCards(cards);
+      setLastOpenedCards(cardsWithFlags);
       setShowPackReveal(true);
       setMessage("Pack opened! 12 new heroes joined your club.");
     } catch (err) {
       console.warn(err);
       const cards = buildMockCards();
+      const cardsWithFlags = cards.map((card) => ({
+        ...card,
+        countryFlag: card.countryFlag ?? state.countryFlags[card.country],
+      }));
       updateState({
         inventory: {
           ...consumePack(state.inventory),
-          cards: [...cards, ...state.inventory.cards],
+          cards: [...cardsWithFlags, ...state.inventory.cards],
         },
       });
-      setLastOpenedCards(cards);
+      setLastOpenedCards(cardsWithFlags);
       setShowPackReveal(true);
       setMessage("Pack opened with starter heroes (API was busy).");
     } finally {
@@ -347,7 +372,7 @@ export default function App() {
                   className="reveal-item"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
-                  <Card card={card} compact />
+                  <Card card={card} compact countryFlags={state.countryFlags} />
                 </div>
               ))}
             </div>
@@ -424,7 +449,7 @@ export default function App() {
             {state.inventory.cards
               .filter((card) => (collectionFilter === "ALL" ? true : card.position === collectionFilter))
               .map((card) => (
-                <Card key={card.id} card={card} />
+                <Card key={card.id} card={card} countryFlags={state.countryFlags} />
               ))}
           </div>
         </section>
@@ -484,9 +509,22 @@ export default function App() {
               <h3>Home Kit</h3>
               <div className={`kit-preview ${selectedTeam.kit.home.pattern}`}>
                 <div className="kit-figure">
-                  <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.home.shirt }} />
-                  <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.home.shorts }} />
-                  <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.home.socks }} />
+                  <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.home.shirt }}>
+                    <span className="kit-collar" />
+                    <span className="kit-sleeve left" />
+                    <span className="kit-sleeve right" />
+                  </div>
+                  <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.home.shorts }}>
+                    <span className="kit-short-trim" />
+                  </div>
+                  <div className="kit-legs">
+                    <div className="kit-sock" style={{ backgroundColor: selectedTeam.kit.home.socks }}>
+                      <span className="kit-boot" />
+                    </div>
+                    <div className="kit-sock" style={{ backgroundColor: selectedTeam.kit.home.socks }}>
+                      <span className="kit-boot" />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="kit-controls">
@@ -561,9 +599,22 @@ export default function App() {
               <h3>Away Kit</h3>
               <div className={`kit-preview ${selectedTeam.kit.away.pattern}`}>
                 <div className="kit-figure">
-                  <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.away.shirt }} />
-                  <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.away.shorts }} />
-                  <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.away.socks }} />
+                  <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.away.shirt }}>
+                    <span className="kit-collar" />
+                    <span className="kit-sleeve left" />
+                    <span className="kit-sleeve right" />
+                  </div>
+                  <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.away.shorts }}>
+                    <span className="kit-short-trim" />
+                  </div>
+                  <div className="kit-legs">
+                    <div className="kit-sock" style={{ backgroundColor: selectedTeam.kit.away.socks }}>
+                      <span className="kit-boot" />
+                    </div>
+                    <div className="kit-sock" style={{ backgroundColor: selectedTeam.kit.away.socks }}>
+                      <span className="kit-boot" />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="kit-controls">
@@ -685,6 +736,7 @@ export default function App() {
                   key={card.id}
                   card={card}
                   compact
+                  countryFlags={state.countryFlags}
                   onDragStart={(event, draggedCard) => {
                     event.dataTransfer.setData("text/plain", draggedCard.id);
                   }}

@@ -230,6 +230,26 @@ button:disabled {
   font-weight: 700;
 }
 
+.card-badges {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.card-badges img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px var(--shadow);
+  background: #fff;
+}
+
+.player-card.compact .card-badges img {
+  width: 28px;
+  height: 28px;
+}
 .card-image {
   display: flex;
   justify-content: center;
@@ -260,27 +280,12 @@ button:disabled {
   align-items: center;
 }
 
-.card-meta .club img {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
 .card-flags {
   display: inline-flex;
   gap: 6px;
   align-items: center;
   font-size: 0.75rem;
   opacity: 0.75;
-}
-
-.card-flags img {
-  width: 22px;
-  height: 14px;
-  object-fit: cover;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px var(--shadow);
 }
 
 .card-stats {
@@ -420,7 +425,7 @@ button:disabled {
 
 .kit-figure {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   justify-items: center;
 }
 
@@ -463,26 +468,98 @@ button:disabled {
 }
 
 .kit-shirt {
-  width: 140px;
-  height: 86px;
-  border-radius: 18px 18px 26px 26px;
+  width: 150px;
+  height: 95px;
+  border-radius: 18px 18px 28px 28px;
   position: relative;
-  clip-path: polygon(10% 0%, 35% 0%, 40% 12%, 60% 12%, 65% 0%, 90% 0%, 100% 35%, 88% 60%, 65% 70%, 65% 100%, 35% 100%, 35% 70%, 12% 60%, 0% 35%);
-  box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 -12px 22px rgba(0, 0, 0, 0.15);
+  clip-path: polygon(18% 0%, 38% 0%, 44% 12%, 56% 12%, 62% 0%, 82% 0%, 100% 40%, 88% 70%, 70% 78%, 70% 100%, 30% 100%, 30% 78%, 12% 70%, 0% 40%);
+}
+
+.kit-collar {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 46px;
+  height: 18px;
+  background: #ffffff;
+  border-radius: 0 0 12px 12px;
+  transform: translateX(-50%);
+  opacity: 0.8;
+}
+
+.kit-sleeve {
+  position: absolute;
+  top: 28px;
+  width: 26px;
+  height: 40px;
+  background: inherit;
+  box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+}
+
+.kit-sleeve.left {
+  left: 0;
+  transform: translateX(-10%);
+}
+
+.kit-sleeve.right {
+  right: 0;
+  transform: translateX(10%);
 }
 
 .kit-shorts {
-  width: 90px;
-  height: 46px;
-  border-radius: 8px 8px 14px 14px;
-  box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.12);
+  width: 110px;
+  height: 56px;
+  border-radius: 8px 8px 16px 16px;
+  position: relative;
+  box-shadow: inset 0 -8px 16px rgba(0, 0, 0, 0.15);
 }
 
-.kit-socks {
-  width: 70px;
-  height: 28px;
+.kit-short-trim {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.kit-legs {
+  display: flex;
+  gap: 10px;
+}
+
+.kit-sock {
+  width: 42px;
+  height: 60px;
+  border-radius: 12px 12px 16px 16px;
+  position: relative;
+  box-shadow: inset 0 -8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kit-sock::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 6px;
+  right: 6px;
+  height: 8px;
   border-radius: 8px;
-  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.kit-boot {
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  width: 46px;
+  height: 20px;
+  background: #f0f0f0;
+  border-radius: 12px 18px 10px 10px;
+  transform: translateX(-50%);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 
 .kit-controls {

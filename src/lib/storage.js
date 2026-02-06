@@ -16,6 +16,7 @@ export const defaultState = {
   formations,
   stadiums: [],
   matchHistory: [],
+  countryFlags: {},
   settings: {
     league: 39,
     leagues: [39, 140, 78, 135, 61, 94],
