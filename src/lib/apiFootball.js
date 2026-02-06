@@ -27,6 +27,14 @@ const apiFetch = async (path, apiKey) => {
   return response.json();
 };
 
+const resolveLeagueId = (settings) => {
+  if (settings?.leagueMode === "mix" && Array.isArray(settings.leagues) && settings.leagues.length) {
+    const index = Math.floor(Math.random() * settings.leagues.length);
+    return settings.leagues[index];
+  }
+  return settings?.league ?? 39;
+};
+
 const mapPosition = (raw) => {
   if (!raw) return "MID";
   const normalized = raw.toUpperCase();
@@ -50,7 +58,10 @@ const ratingFromStats = (statBlock) => {
   return clamp(Math.round(base), 50, 90);
 };
 
-export const fetchPlayersFromApi = async ({ league = 39, season = 2023, count = 12 }) => {
+export const fetchPlayersFromApi = async (settings) => {
+  const league = resolveLeagueId(settings);
+  const season = settings?.season ?? 2023;
+  const count = settings?.count ?? 12;
   const apiKey = getApiKey();
   const meta = await apiFetch(`/players?league=${league}&season=${season}&page=1`, apiKey);
   const totalPages = Math.max(1, meta?.paging?.total ?? 1);
@@ -90,7 +101,9 @@ export const fetchPlayersFromApi = async ({ league = 39, season = 2023, count = 
   });
 };
 
-export const fetchStadiumsFromApi = async ({ league = 39, season = 2023 }) => {
+export const fetchStadiumsFromApi = async (settings) => {
+  const league = resolveLeagueId(settings);
+  const season = settings?.season ?? 2023;
   const apiKey = getApiKey();
   const data = await apiFetch(`/venues?league=${league}&season=${season}`, apiKey);
   const venues = data?.response ?? [];

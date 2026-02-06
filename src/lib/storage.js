@@ -1,5 +1,5 @@
 import { formations } from "./formations";
-import { todayISO } from "./utils";
+import { latestSeasonYear, todayISO } from "./utils";
 
 const STORAGE_KEY = "footballCardGameState";
 
@@ -18,7 +18,10 @@ export const defaultState = {
   matchHistory: [],
   settings: {
     league: 39,
-    season: 2023,
+    leagues: [39, 140, 78, 135, 61, 94],
+    leagueMode: "mix",
+    season: latestSeasonYear(),
+    autoSeason: true,
     useLiveApi: true,
   },
 };

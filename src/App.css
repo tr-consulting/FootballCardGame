@@ -364,6 +364,92 @@ button:disabled {
   gap: 10px;
 }
 
+.kit-designer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.kit-column {
+  background: #fff;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px var(--shadow);
+  display: grid;
+  gap: 12px;
+}
+
+.kit-preview {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f7f7f7;
+}
+
+.kit-preview.stripes .kit-shirt {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.35) 20%,
+    transparent 20%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 40%,
+    rgba(255, 255, 255, 0.35) 60%,
+    transparent 60%,
+    transparent 80%,
+    rgba(255, 255, 255, 0.35) 80%,
+    rgba(255, 255, 255, 0.35) 100%
+  );
+  background-blend-mode: screen;
+}
+
+.kit-preview.waves .kit-shirt {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 255, 255, 0.25) 0,
+    rgba(255, 255, 255, 0.25) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+  background-blend-mode: screen;
+}
+
+.kit-preview.dots .kit-shirt {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.35) 20%, transparent 20%);
+  background-size: 12px 12px;
+  background-blend-mode: screen;
+}
+
+.kit-preview.clean .kit-shirt {
+  background-image: none;
+}
+
+.kit-shirt {
+  width: 120px;
+  height: 70px;
+  border-radius: 12px 12px 20px 20px;
+}
+
+.kit-shorts {
+  width: 90px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.kit-socks {
+  width: 70px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+.kit-controls {
+  display: grid;
+  gap: 10px;
+}
+
 .match-controls {
   display: flex;
   gap: 16px;

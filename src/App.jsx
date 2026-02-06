@@ -12,7 +12,7 @@ import {
   saveState,
   consumePack,
 } from "./lib/storage";
-import { formatNumber } from "./lib/utils";
+import { formatNumber, latestSeasonYear } from "./lib/utils";
 import { packCostTokens, rewardTokens } from "./lib/economy";
 import { buildCommentary, buildSummary, pickScorers, simulateMatch } from "./lib/matchSim";
 
@@ -30,8 +30,18 @@ const createTeam = () => ({
   name: "My Heroes",
   formationId: "4-4-2",
   kit: {
-    home: { primary: "#ff6b35", secondary: "#fff3d6", pattern: "stripes" },
-    away: { primary: "#2f80ed", secondary: "#e0f1ff", pattern: "waves" },
+    home: {
+      shirt: "#ff6b35",
+      shorts: "#ffffff",
+      socks: "#ffb067",
+      pattern: "stripes",
+    },
+    away: {
+      shirt: "#2f80ed",
+      shorts: "#e0f1ff",
+      socks: "#87c6ff",
+      pattern: "waves",
+    },
   },
   lineup: formations
     .find((formation) => formation.id === "4-4-2")
@@ -49,6 +59,7 @@ export default function App() {
   const [lastOpenedCards, setLastOpenedCards] = useState([]);
   const [showPackReveal, setShowPackReveal] = useState(false);
   const [collectionFilter, setCollectionFilter] = useState("ALL");
+  const [teamFilter, setTeamFilter] = useState("ALL");
 
   const cardsById = useMemo(() => {
     const map = {};
@@ -65,6 +76,51 @@ export default function App() {
   useEffect(() => {
     saveState(state);
   }, [state]);
+
+  useEffect(() => {
+    if (state.settings.autoSeason) {
+      const latest = latestSeasonYear();
+      if (state.settings.season !== latest) {
+        updateState({ settings: { ...state.settings, season: latest } });
+      }
+    }
+  }, [state.settings.autoSeason]);
+
+  useEffect(() => {
+    const normalized = state.teams.map((team) => {
+      const home = team.kit?.home ?? {};
+      const away = team.kit?.away ?? {};
+      const needsMigration = home.primary || away.primary || !home.shirt || !away.shirt;
+      if (!needsMigration) return team;
+      const normalizeSide = (side, fallback) => ({
+        shirt: side.shirt ?? side.primary ?? fallback.shirt,
+        shorts: side.shorts ?? side.secondary ?? fallback.shorts,
+        socks: side.socks ?? side.secondary ?? fallback.socks,
+        pattern: side.pattern ?? fallback.pattern,
+      });
+      return {
+        ...team,
+        kit: {
+          home: normalizeSide(home, {
+            shirt: "#ff6b35",
+            shorts: "#ffffff",
+            socks: "#ffb067",
+            pattern: "stripes",
+          }),
+          away: normalizeSide(away, {
+            shirt: "#2f80ed",
+            shorts: "#e0f1ff",
+            socks: "#87c6ff",
+            pattern: "waves",
+          }),
+        },
+      };
+    });
+    const changed = normalized.some((team, index) => team !== state.teams[index]);
+    if (changed) {
+      updateState({ teams: normalized });
+    }
+  }, [state.teams.length]);
 
   useEffect(() => {
     if (state.teams.length === 0) {
@@ -87,7 +143,8 @@ export default function App() {
   const fetchStadiums = async () => {
     try {
       setLoading(true);
-      const stadiums = await fetchStadiumsFromApi(state.settings);
+      const season = state.settings.autoSeason ? latestSeasonYear() : state.settings.season;
+      const stadiums = await fetchStadiumsFromApi({ ...state.settings, season });
       updateState({ stadiums: stadiums.length ? stadiums : mockStadiums });
       setMessage("Stadiums loaded!");
     } catch (err) {
@@ -111,8 +168,9 @@ export default function App() {
 
     setLoading(true);
     try {
+      const season = state.settings.autoSeason ? latestSeasonYear() : state.settings.season;
       const cards = state.settings.useLiveApi
-        ? await fetchPlayersFromApi({ ...state.settings, count: 12 })
+        ? await fetchPlayersFromApi({ ...state.settings, season, count: 12 })
         : buildMockCards();
 
       updateState({
@@ -421,6 +479,158 @@ export default function App() {
             </label>
           </div>
 
+          <div className="kit-designer">
+            <div className="kit-column">
+              <h3>Home Kit</h3>
+              <div className={`kit-preview ${selectedTeam.kit.home.pattern}`}>
+                <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.home.shirt }} />
+                <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.home.shorts }} />
+                <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.home.socks }} />
+              </div>
+              <div className="kit-controls">
+                <label>
+                  Shirt
+                  <input
+                    type="color"
+                    value={selectedTeam.kit.home.shirt}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          home: { ...selectedTeam.kit.home, shirt: event.target.value },
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Shorts
+                  <input
+                    type="color"
+                    value={selectedTeam.kit.home.shorts}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          home: { ...selectedTeam.kit.home, shorts: event.target.value },
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Socks
+                  <input
+                    type="color"
+                    value={selectedTeam.kit.home.socks}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          home: { ...selectedTeam.kit.home, socks: event.target.value },
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Pattern
+                  <select
+                    value={selectedTeam.kit.home.pattern}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          home: { ...selectedTeam.kit.home, pattern: event.target.value },
+                        },
+                      })
+                    }
+                  >
+                    <option value="stripes">Stripes</option>
+                    <option value="waves">Waves</option>
+                    <option value="dots">Dots</option>
+                    <option value="clean">Clean</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="kit-column">
+              <h3>Away Kit</h3>
+              <div className={`kit-preview ${selectedTeam.kit.away.pattern}`}>
+                <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.away.shirt }} />
+                <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.away.shorts }} />
+                <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.away.socks }} />
+              </div>
+              <div className="kit-controls">
+                <label>
+                  Shirt
+                  <input
+                    type="color"
+                    value={selectedTeam.kit.away.shirt}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          away: { ...selectedTeam.kit.away, shirt: event.target.value },
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Shorts
+                  <input
+                    type="color"
+                    value={selectedTeam.kit.away.shorts}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          away: { ...selectedTeam.kit.away, shorts: event.target.value },
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Socks
+                  <input
+                    type="color"
+                    value={selectedTeam.kit.away.socks}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          away: { ...selectedTeam.kit.away, socks: event.target.value },
+                        },
+                      })
+                    }
+                  />
+                </label>
+                <label>
+                  Pattern
+                  <select
+                    value={selectedTeam.kit.away.pattern}
+                    onChange={(event) =>
+                      updateTeam(selectedTeam.id, {
+                        kit: {
+                          ...selectedTeam.kit,
+                          away: { ...selectedTeam.kit.away, pattern: event.target.value },
+                        },
+                      })
+                    }
+                  >
+                    <option value="stripes">Stripes</option>
+                    <option value="waves">Waves</option>
+                    <option value="dots">Dots</option>
+                    <option value="clean">Clean</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <div className="pitch">
             {selectedFormation?.slots.map((slot) => {
               const lineupSlot = selectedTeam.lineup.find((item) => item.slotId === slot.positionKey);
@@ -452,17 +662,30 @@ export default function App() {
             })}
           </div>
 
-          <div className="collection-grid compact">
-            {state.inventory.cards.map((card) => (
-              <Card
-                key={card.id}
-                card={card}
-                compact
-                onDragStart={(event, draggedCard) => {
-                  event.dataTransfer.setData("text/plain", draggedCard.id);
-                }}
-              />
+          <div className="collection-filters">
+            {["ALL", "GK", "DEF", "MID", "ATT"].map((filter) => (
+              <button
+                key={filter}
+                className={teamFilter === filter ? "active" : ""}
+                onClick={() => setTeamFilter(filter)}
+              >
+                {filter === "ALL" ? "All" : filter}
+              </button>
             ))}
+          </div>
+          <div className="collection-grid compact">
+            {state.inventory.cards
+              .filter((card) => (teamFilter === "ALL" ? true : card.position === teamFilter))
+              .map((card) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  compact
+                  onDragStart={(event, draggedCard) => {
+                    event.dataTransfer.setData("text/plain", draggedCard.id);
+                  }}
+                />
+              ))}
           </div>
         </section>
       )}
@@ -574,6 +797,21 @@ export default function App() {
                   onBlur={(event) => localStorage.setItem("footballApiKey", event.target.value)}
                 />
               </label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={state.settings.leagueMode === "mix"}
+                  onChange={(event) =>
+                    updateState({
+                      settings: {
+                        ...state.settings,
+                        leagueMode: event.target.checked ? "mix" : "single",
+                      },
+                    })
+                  }
+                />
+                Mix leagues
+              </label>
               <label>
                 League ID
                 <input
@@ -583,10 +821,42 @@ export default function App() {
                 />
               </label>
               <label>
+                League IDs (comma separated)
+                <input
+                  defaultValue={state.settings.leagues.join(",")}
+                  onBlur={(event) => {
+                    const value = event.target.value
+                      .split(",")
+                      .map((item) => Number(item.trim()))
+                      .filter((item) => Number.isFinite(item));
+                    if (value.length) {
+                      updateState({ settings: { ...state.settings, leagues: value } });
+                    }
+                  }}
+                />
+              </label>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={state.settings.autoSeason}
+                  onChange={(event) =>
+                    updateState({
+                      settings: {
+                        ...state.settings,
+                        autoSeason: event.target.checked,
+                        season: event.target.checked ? latestSeasonYear() : state.settings.season,
+                      },
+                    })
+                  }
+                />
+                Auto latest season
+              </label>
+              <label>
                 Season
                 <input
                   type="number"
                   value={state.settings.season}
+                  disabled={state.settings.autoSeason}
                   onChange={(event) => updateState({ settings: { ...state.settings, season: Number(event.target.value) } })}
                 />
               </label>

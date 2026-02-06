@@ -27,3 +27,9 @@ export const pickRandom = (array, count, rand = Math.random) => {
 };
 
 export const formatNumber = (value) => new Intl.NumberFormat().format(value);
+
+export const latestSeasonYear = (now = new Date()) => {
+  const year = now.getFullYear();
+  const month = now.getMonth(); // 0-11
+  return month >= 6 ? year : year - 1;
+};
