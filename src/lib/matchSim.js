@@ -148,3 +148,57 @@ export const buildCommentary = ({
 
   return lines.join(" ");
 };
+
+export const buildMatchTimeline = ({
+  homeName,
+  awayName,
+  scorersHome,
+  scorersAway,
+  seed,
+}) => {
+  const rand = seededRandom(seed ?? Date.now());
+  const events = [
+    { minute: 1, type: "kickoff", text: `Kickoff! ${homeName} vs ${awayName}.` },
+  ];
+
+  scorersHome.forEach((scorer) => {
+    events.push({
+      minute: scorer.minute,
+      type: "goal",
+      text: `${scorer.name} scores for ${homeName}!`,
+    });
+  });
+
+  scorersAway.forEach((scorer) => {
+    events.push({
+      minute: scorer.minute,
+      type: "goal",
+      text: `${scorer.name} scores for ${awayName}!`,
+    });
+  });
+
+  const flavor = [
+    `Great tackle to stop a counter!`,
+    `A shot hits the post! So close.`,
+    `Big save from the keeper!`,
+    `A clever through ball opens space.`,
+    `Corner kick adds pressure.`,
+    `Quick one-two play unlocks the defense.`,
+  ];
+
+  const extraCount = 3 + Math.floor(rand() * 3);
+  for (let i = 0; i < extraCount; i += 1) {
+    const minute = Math.floor(rand() * 84) + 4;
+    const text = flavor[Math.floor(rand() * flavor.length)];
+    events.push({ minute, type: "moment", text });
+  }
+
+  events.push({ minute: 45, type: "half", text: "Half-time whistle! Time for a breather." });
+  events.push({ minute: 90, type: "full", text: "Full-time! What a match." });
+
+  const order = { kickoff: 0, goal: 1, moment: 2, half: 3, full: 4 };
+  return events.sort((a, b) => {
+    if (a.minute !== b.minute) return a.minute - b.minute;
+    return (order[a.type] ?? 5) - (order[b.type] ?? 5);
+  });
+};

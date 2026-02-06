@@ -14,7 +14,7 @@ import {
 } from "./lib/storage";
 import { formatNumber, latestSeasonYear } from "./lib/utils";
 import { packCostTokens, rewardTokens } from "./lib/economy";
-import { buildCommentary, buildSummary, pickScorers, simulateMatch } from "./lib/matchSim";
+import { buildCommentary, buildMatchTimeline, buildSummary, pickScorers, simulateMatch } from "./lib/matchSim";
 
 const views = [
   { id: "packs", label: "Packs" },
@@ -60,6 +60,12 @@ export default function App() {
   const [showPackReveal, setShowPackReveal] = useState(false);
   const [collectionFilter, setCollectionFilter] = useState("ALL");
   const [teamFilter, setTeamFilter] = useState("ALL");
+  const [matchPhase, setMatchPhase] = useState("idle");
+  const [pendingMatch, setPendingMatch] = useState(null);
+  const [liveEvents, setLiveEvents] = useState([]);
+  const [eventCursor, setEventCursor] = useState(0);
+  const [liveMinute, setLiveMinute] = useState(0);
+  const [chatLog, setChatLog] = useState([]);
 
   const cardsById = useMemo(() => {
     const map = {};
@@ -135,6 +141,40 @@ export default function App() {
       fetchStadiums();
     }
   }, [state.stadiums.length, state.settings.useLiveApi]);
+
+  useEffect(() => {
+    if (!pendingMatch || matchPhase !== "playing") return;
+    if (!pendingMatch.timeline || pendingMatch.timeline.length === 0) return;
+
+    const interval = setInterval(() => {
+      setEventCursor((cursor) => {
+        const nextIndex = cursor + 1;
+        const event = pendingMatch.timeline[cursor];
+        if (event) {
+          setLiveEvents((events) => [...events, event]);
+          setLiveMinute(event.minute);
+        }
+        if (nextIndex >= pendingMatch.timeline.length) {
+          clearInterval(interval);
+          setMatchPhase("finished");
+        }
+        return nextIndex;
+      });
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [matchPhase, pendingMatch]);
+
+  useEffect(() => {
+    if (matchPhase !== "finished" || !pendingMatch) return;
+    updateState({
+      matchHistory: [pendingMatch.match, ...state.matchHistory],
+      inventory: {
+        ...state.inventory,
+        tokens: state.inventory.tokens + pendingMatch.reward,
+      },
+    });
+  }, [matchPhase]);
 
   useEffect(() => {
     if (!state.settings.useLiveApi) return;
@@ -261,14 +301,25 @@ export default function App() {
 
   const runMatch = () => {
     if (!selectedTeam || !selectedFormation) return;
+    const opponentName = "Robo Strikers";
+    const opponentFormation =
+      formations.find((formation) => formation.id !== selectedFormation.id) ?? formations[0];
+    const pool = state.inventory.cards.length ? state.inventory.cards : buildMockCards();
+    const opponentCards = pool.slice(0, opponentFormation.slots.length);
     const awayTeam = {
       id: "cpu",
-      name: "Robo Strikers",
-      formationId: "4-3-3",
-      lineup: selectedFormation.slots.map((slot, index) => {
-        const card = state.inventory.cards[index];
+      name: opponentName,
+      formationId: opponentFormation.id,
+      lineup: opponentFormation.slots.map((slot, index) => {
+        const card = opponentCards[index];
         return { slotId: slot.positionKey, cardId: card?.id ?? null };
       }),
+    };
+
+    const opponentKit = {
+      shirt: "#2b2d42",
+      shorts: "#8d99ae",
+      socks: "#ef233c",
     };
 
     const formationAway = formations.find((formation) => formation.id === awayTeam.formationId) ?? formations[0];
@@ -319,15 +370,45 @@ export default function App() {
       createdAt: new Date().toISOString(),
     };
 
-    updateState({
-      matchHistory: [match, ...state.matchHistory],
-      inventory: {
-        ...state.inventory,
-        tokens: state.inventory.tokens + reward,
-      },
+    const timeline = buildMatchTimeline({
+      homeName: selectedTeam.name,
+      awayName: awayTeam.name,
+      scorersHome,
+      scorersAway,
+      seed: Date.now(),
     });
 
-    setMessage(`Match complete! You earned ${reward} tokens.`);
+    setPendingMatch({
+      match,
+      reward,
+      timeline,
+      homeTeam: selectedTeam,
+      awayTeam,
+      formationHome: selectedFormation,
+      formationAway,
+      opponentKit,
+    });
+    setMatchPhase("preview");
+    setLiveEvents([]);
+    setEventCursor(0);
+    setLiveMinute(0);
+    setChatLog([]);
+  };
+
+  const startMatch = () => {
+    setMatchPhase("playing");
+    setLiveEvents([]);
+    setEventCursor(0);
+    setLiveMinute(0);
+  };
+
+  const sendTaunt = (text) => {
+    setChatLog((log) => [...log, { from: "you", text }]);
+    const responses = ["Bring it on!", "We will see.", "Nice try!", "Let the match decide."];
+    setTimeout(() => {
+      const reply = responses[Math.floor(Math.random() * responses.length)];
+      setChatLog((log) => [...log, { from: "opponent", text: reply }]);
+    }, 800);
   };
 
   const renderRatingFormula = () => (
@@ -767,13 +848,124 @@ export default function App() {
                 ))}
               </select>
             </label>
-            <button onClick={runMatch}>Simulate Match</button>
+            <button onClick={runMatch}>Preview Match</button>
           </div>
           {selectedStadium && (
             <div className="stadium-meta">
               <span>Home bonus: +{selectedStadium.modifiers.homeAdvantage.toFixed(1)}</span>
               <span>Capacity bonus: +{selectedStadium.modifiers.capacityBonus.toFixed(1)}</span>
               <span>Weather: {selectedStadium.modifiers.weather ?? "sun"}</span>
+            </div>
+          )}
+
+          {matchPhase === "preview" && pendingMatch && (
+            <div className="match-preview">
+              <div>
+                <h3>Opponent Lineup</h3>
+                <div className="lineup-list">
+                  {pendingMatch.formationAway.slots.map((slot) => {
+                    const lineupSlot = pendingMatch.awayTeam.lineup.find((item) => item.slotId === slot.positionKey);
+                    const card = lineupSlot?.cardId ? cardsById[lineupSlot.cardId] : null;
+                    return (
+                      <div key={slot.positionKey} className="lineup-item">
+                        <span>{slot.positionKey}</span>
+                        <strong>{card?.name ?? "TBD"}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="preview-actions">
+                <button onClick={startMatch}>Start Match</button>
+              </div>
+            </div>
+          )}
+
+          {(matchPhase === "playing" || matchPhase === "finished") && pendingMatch && (
+            <div className="match-live">
+              <div className={`match-pitch ${matchPhase}`}>
+                {pendingMatch.formationHome.slots.map((slot) => {
+                  const lineupSlot = pendingMatch.homeTeam.lineup.find((item) => item.slotId === slot.positionKey);
+                  const card = lineupSlot?.cardId ? cardsById[lineupSlot.cardId] : null;
+                  return (
+                    <div
+                      key={slot.positionKey}
+                      className="match-player home"
+                      style={{
+                        left: `${slot.x}%`,
+                        top: `${slot.y}%`,
+                        backgroundColor: pendingMatch.homeTeam.kit.home.shirt,
+                        borderColor: pendingMatch.homeTeam.kit.home.shorts,
+                      }}
+                    >
+                      <span>{card?.name ?? slot.positionKey}</span>
+                    </div>
+                  );
+                })}
+                {pendingMatch.formationAway.slots.map((slot) => {
+                  const lineupSlot = pendingMatch.awayTeam.lineup.find((item) => item.slotId === slot.positionKey);
+                  const card = lineupSlot?.cardId ? cardsById[lineupSlot.cardId] : null;
+                  return (
+                    <div
+                      key={slot.positionKey}
+                      className="match-player away"
+                      style={{
+                        left: `${slot.x}%`,
+                        top: `${slot.y}%`,
+                        backgroundColor: pendingMatch.opponentKit.shirt,
+                        borderColor: pendingMatch.opponentKit.shorts,
+                      }}
+                    >
+                      <span>{card?.name ?? slot.positionKey}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="match-events">
+                <div className="match-score">
+                  <strong>
+                    {pendingMatch.homeTeam.name} {pendingMatch.match.score.home} - {pendingMatch.match.score.away}{" "}
+                    {pendingMatch.awayTeam.name}
+                  </strong>
+                  <span>{liveMinute}'</span>
+                </div>
+                <div className="events-list">
+                  {liveEvents.map((event, index) => (
+                    <div key={`${event.minute}-${index}`} className={`event ${event.type}`}>
+                      <span>{event.minute}'</span>
+                      <p>{event.text}</p>
+                    </div>
+                  ))}
+                </div>
+                {matchPhase === "finished" && (
+                  <div className="match-summary">
+                    <p>{pendingMatch.match.summary}</p>
+                    <p className="commentary">{pendingMatch.match.commentary}</p>
+                    <strong>You earned {pendingMatch.reward} tokens.</strong>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(matchPhase === "preview" || matchPhase === "playing") && (
+            <div className="match-chat">
+              <h3>Match Words</h3>
+              <div className="chat-buttons">
+                {["Snyggt", "Rematch?", "Du är bajs", "Jag kommer vinna"].map((text) => (
+                  <button key={text} onClick={() => sendTaunt(text)}>
+                    {text}
+                  </button>
+                ))}
+              </div>
+              <div className="chat-log">
+                {chatLog.map((entry, index) => (
+                  <div key={`${entry.from}-${index}`} className={`chat-line ${entry.from}`}>
+                    <span>{entry.text}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
