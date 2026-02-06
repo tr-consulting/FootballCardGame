@@ -36,6 +36,7 @@
   box-shadow: 0 4px 12px var(--shadow);
   cursor: pointer;
   font-weight: 600;
+  color: var(--dark);
 }
 
 .nav button.active {
@@ -185,6 +186,25 @@ button:disabled {
   gap: 18px;
 }
 
+.collection-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.collection-filters button {
+  background: #fff;
+  color: var(--dark);
+  border: 2px solid transparent;
+}
+
+.collection-filters button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
 .collection-grid.compact {
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
@@ -317,6 +337,26 @@ button:disabled {
 
 .slot-empty {
   opacity: 0.6;
+}
+
+.slot-card {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+}
+
+.slot-card img {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+.slot-card span {
+  font-weight: 700;
+  font-size: 0.7rem;
 }
 
 .team-actions {

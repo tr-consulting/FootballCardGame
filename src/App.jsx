@@ -48,6 +48,7 @@ export default function App() {
   const [selectedStadiumId, setSelectedStadiumId] = useState(null);
   const [lastOpenedCards, setLastOpenedCards] = useState([]);
   const [showPackReveal, setShowPackReveal] = useState(false);
+  const [collectionFilter, setCollectionFilter] = useState("ALL");
 
   const cardsById = useMemo(() => {
     const map = {};
@@ -350,10 +351,23 @@ export default function App() {
             <h2>Your Collection</h2>
             <p>{state.inventory.cards.length} cards collected</p>
           </div>
-          <div className="collection-grid">
-            {state.inventory.cards.map((card) => (
-              <Card key={card.id} card={card} />
+          <div className="collection-filters">
+            {["ALL", "GK", "DEF", "MID", "ATT"].map((filter) => (
+              <button
+                key={filter}
+                className={collectionFilter === filter ? "active" : ""}
+                onClick={() => setCollectionFilter(filter)}
+              >
+                {filter === "ALL" ? "All" : filter}
+              </button>
             ))}
+          </div>
+          <div className="collection-grid">
+            {state.inventory.cards
+              .filter((card) => (collectionFilter === "ALL" ? true : card.position === collectionFilter))
+              .map((card) => (
+                <Card key={card.id} card={card} />
+              ))}
           </div>
         </section>
       )}
@@ -426,7 +440,10 @@ export default function App() {
                 >
                   <div className="slot-role">{slot.positionKey}</div>
                   {card ? (
-                    <div className="slot-card">{card.name}</div>
+                    <div className="slot-card">
+                      <img src={card.imageUrl} alt={card.name} />
+                      <span>{card.name}</span>
+                    </div>
                   ) : (
                     <div className="slot-empty">Drop card</div>
                   )}
