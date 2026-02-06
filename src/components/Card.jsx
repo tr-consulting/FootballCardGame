@@ -1,5 +1,10 @@
 import PropTypes from "prop-types";
 
+const flagUrl = (country) => {
+  if (!country) return "";
+  return `https://countryflagsapi.com/png/${encodeURIComponent(country)}`;
+};
+
 const statKeys = ["pace", "shooting", "passing", "defense", "physical"];
 
 export default function Card({ card, onDragStart, compact = false }) {
@@ -19,8 +24,15 @@ export default function Card({ card, onDragStart, compact = false }) {
       <div className="card-body">
         <div className="card-name">{card.name}</div>
         <div className="card-meta">
-          <span>{card.club}</span>
+          <span className="club">
+            {card.clubLogo && <img src={card.clubLogo} alt={card.club} />}
+            {card.club}
+          </span>
           <span>{card.league}</span>
+        </div>
+        <div className="card-flags">
+          {card.country && <img src={flagUrl(card.country)} alt={card.country} />}
+          {card.country && <span>{card.country}</span>}
         </div>
         <div className="card-stats">
           {statKeys.map((key) => (
@@ -41,7 +53,9 @@ Card.propTypes = {
     name: PropTypes.string.isRequired,
     position: PropTypes.string.isRequired,
     imageUrl: PropTypes.string,
+    country: PropTypes.string,
     club: PropTypes.string.isRequired,
+    clubLogo: PropTypes.string,
     league: PropTypes.string.isRequired,
     overall: PropTypes.number.isRequired,
     stats: PropTypes.object.isRequired,

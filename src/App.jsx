@@ -483,9 +483,11 @@ export default function App() {
             <div className="kit-column">
               <h3>Home Kit</h3>
               <div className={`kit-preview ${selectedTeam.kit.home.pattern}`}>
-                <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.home.shirt }} />
-                <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.home.shorts }} />
-                <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.home.socks }} />
+                <div className="kit-figure">
+                  <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.home.shirt }} />
+                  <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.home.shorts }} />
+                  <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.home.socks }} />
+                </div>
               </div>
               <div className="kit-controls">
                 <label>
@@ -558,9 +560,11 @@ export default function App() {
             <div className="kit-column">
               <h3>Away Kit</h3>
               <div className={`kit-preview ${selectedTeam.kit.away.pattern}`}>
-                <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.away.shirt }} />
-                <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.away.shorts }} />
-                <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.away.socks }} />
+                <div className="kit-figure">
+                  <div className="kit-shirt" style={{ backgroundColor: selectedTeam.kit.away.shirt }} />
+                  <div className="kit-shorts" style={{ backgroundColor: selectedTeam.kit.away.shorts }} />
+                  <div className="kit-socks" style={{ backgroundColor: selectedTeam.kit.away.socks }} />
+                </div>
               </div>
               <div className="kit-controls">
                 <label>
