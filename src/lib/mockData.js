@@ -66,20 +66,20 @@ export const mockStadiums = [
     name: "Spark Arena",
     city: "Sunville",
     capacity: 42000,
-    modifiers: { homeAdvantage: 2, capacityBonus: 1 },
+    modifiers: { homeAdvantage: 2, capacityBonus: 1, weather: "sun" },
   },
   {
     id: 102,
     name: "Blue Wave Stadium",
     city: "Harbor City",
     capacity: 36000,
-    modifiers: { homeAdvantage: 1.5, capacityBonus: 0.8 },
+    modifiers: { homeAdvantage: 1.5, capacityBonus: 0.8, weather: "wind" },
   },
   {
     id: 103,
     name: "Tiger Field",
     city: "Oak Town",
     capacity: 28000,
-    modifiers: { homeAdvantage: 1, capacityBonus: 0.4 },
+    modifiers: { homeAdvantage: 1, capacityBonus: 0.4, weather: "rain" },
   },
 ];

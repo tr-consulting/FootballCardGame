@@ -14,7 +14,7 @@ import {
 } from "./lib/storage";
 import { formatNumber } from "./lib/utils";
 import { packCostTokens, rewardTokens } from "./lib/economy";
-import { buildSummary, pickScorers, simulateMatch } from "./lib/matchSim";
+import { buildCommentary, buildSummary, pickScorers, simulateMatch } from "./lib/matchSim";
 
 const views = [
   { id: "packs", label: "Packs" },
@@ -46,6 +46,8 @@ export default function App() {
   const [error, setError] = useState("");
   const [selectedTeamId, setSelectedTeamId] = useState(null);
   const [selectedStadiumId, setSelectedStadiumId] = useState(null);
+  const [lastOpenedCards, setLastOpenedCards] = useState([]);
+  const [showPackReveal, setShowPackReveal] = useState(false);
 
   const cardsById = useMemo(() => {
     const map = {};
@@ -118,6 +120,8 @@ export default function App() {
           cards: [...cards, ...state.inventory.cards],
         },
       });
+      setLastOpenedCards(cards);
+      setShowPackReveal(true);
       setMessage("Pack opened! 12 new heroes joined your club.");
     } catch (err) {
       console.warn(err);
@@ -128,6 +132,8 @@ export default function App() {
           cards: [...cards, ...state.inventory.cards],
         },
       });
+      setLastOpenedCards(cards);
+      setShowPackReveal(true);
       setMessage("Pack opened with starter heroes (API was busy).");
     } finally {
       setLoading(false);
@@ -195,6 +201,10 @@ export default function App() {
     const scorersHome = pickScorers(selectedTeam, result.homeGoals, cardsById, Date.now() + 1);
     const scorersAway = pickScorers(awayTeam, result.awayGoals, cardsById, Date.now() + 2);
 
+    let momentum = "even";
+    if (result.homeStrength - result.awayStrength > 3) momentum = "home";
+    if (result.awayStrength - result.homeStrength > 3) momentum = "away";
+
     let reward = rewardTokens.draw;
     if (result.homeGoals > result.awayGoals) reward = rewardTokens.win;
     if (result.homeGoals < result.awayGoals) reward = rewardTokens.lose;
@@ -207,6 +217,20 @@ export default function App() {
       score: { home: result.homeGoals, away: result.awayGoals },
       scorers: [...scorersHome, ...scorersAway],
       summary: buildSummary(selectedTeam.name, awayTeam.name, result.homeGoals, result.awayGoals, selectedStadium),
+      commentary: buildCommentary({
+        homeName: selectedTeam.name,
+        awayName: awayTeam.name,
+        homeGoals: result.homeGoals,
+        awayGoals: result.awayGoals,
+        stadium: selectedStadium,
+        formationBoost: result.formationBoost,
+        stadiumBoost: result.stadiumBoost,
+        capacityBoost: result.capacityBoost,
+        weatherBoost: result.weatherBoost,
+        momentum,
+        scorersHome,
+        scorersAway,
+      }),
       tokensAwarded: { winner: reward, loser: rewardTokens.lose },
       createdAt: new Date().toISOString(),
     };
@@ -250,6 +274,27 @@ export default function App() {
 
   return (
     <div className="app">
+      {showPackReveal && (
+        <div className="pack-reveal">
+          <div className="pack-reveal-card">
+            <div className="pack-reveal-header">
+              <h2>New Cards!</h2>
+              <button onClick={() => setShowPackReveal(false)}>Done</button>
+            </div>
+            <div className="pack-reveal-grid">
+              {lastOpenedCards.map((card, index) => (
+                <div
+                  key={card.id}
+                  className="reveal-item"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <Card card={card} compact />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       <header className="top-bar">
         <div>
           <h1>Football Card Game</h1>
@@ -428,6 +473,13 @@ export default function App() {
             </label>
             <button onClick={runMatch}>Simulate Match</button>
           </div>
+          {selectedStadium && (
+            <div className="stadium-meta">
+              <span>Home bonus: +{selectedStadium.modifiers.homeAdvantage.toFixed(1)}</span>
+              <span>Capacity bonus: +{selectedStadium.modifiers.capacityBonus.toFixed(1)}</span>
+              <span>Weather: {selectedStadium.modifiers.weather ?? "sun"}</span>
+            </div>
+          )}
 
           <div className="match-history">
             {state.matchHistory.map((match) => (
@@ -436,6 +488,7 @@ export default function App() {
                   {selectedTeam.name} {match.score.home} - {match.score.away} Robo Strikers
                 </strong>
                 <p>{match.summary}</p>
+                {match.commentary && <p className="commentary">{match.commentary}</p>}
                 <small>{new Date(match.createdAt).toLocaleString()}</small>
               </div>
             ))}

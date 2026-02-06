@@ -86,6 +86,53 @@
   color: #9f1239;
 }
 
+.pack-reveal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+}
+
+.pack-reveal-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 20px;
+  width: min(1100px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 40px rgba(17, 24, 39, 0.3);
+}
+
+.pack-reveal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pack-reveal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.reveal-item {
+  animation: revealPop 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px) scale(0.96);
+}
+
+@keyframes revealPop {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .pack-area {
   display: flex;
   align-items: center;
@@ -284,6 +331,15 @@ button:disabled {
   align-items: flex-end;
 }
 
+.stadium-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  flex-wrap: wrap;
+}
+
 .match-history {
   margin-top: 16px;
   display: grid;
@@ -295,6 +351,12 @@ button:disabled {
   padding: 12px 16px;
   border-radius: 14px;
   box-shadow: 0 6px 12px var(--shadow);
+}
+
+.commentary {
+  font-size: 0.95rem;
+  margin-top: 6px;
+  color: #2f3b52;
 }
 
 .shop-grid {

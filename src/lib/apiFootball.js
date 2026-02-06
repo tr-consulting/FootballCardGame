@@ -98,6 +98,8 @@ export const fetchStadiumsFromApi = async ({ league = 39, season = 2023 }) => {
   return venues.slice(0, 12).map((venue) => {
     const capacity = venue.capacity ?? 0;
     const capacityBonus = clamp(Math.round((capacity / 50000) * 2 * 10) / 10, 0, 2);
+    const weatherRoll = venue.id % 3;
+    const weather = weatherRoll === 0 ? "rain" : weatherRoll === 1 ? "sun" : "wind";
 
     return {
       id: venue.id,
@@ -108,6 +110,7 @@ export const fetchStadiumsFromApi = async ({ league = 39, season = 2023 }) => {
       modifiers: {
         homeAdvantage: 1 + capacityBonus * 0.4,
         capacityBonus,
+        weather,
       },
     };
   });
