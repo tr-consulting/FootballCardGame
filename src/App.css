@@ -647,6 +647,38 @@ button:disabled {
   top: 15%;
 }
 
+.goal {
+  position: absolute;
+  left: 50%;
+  width: 140px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.goal-top {
+  top: 6px;
+}
+
+.goal-bottom {
+  bottom: 6px;
+}
+
+.match-ball {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, #d9d9d9);
+  border: 2px solid #2b2b3d;
+  transform: translate(-50%, -50%);
+  transition: left 0.8s ease, top 0.8s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
 .match-player {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -662,6 +694,8 @@ button:disabled {
   text-align: center;
   padding: 2px;
   animation: bob 1.6s ease-in-out infinite;
+  transition: left 1.2s ease, top 1.2s ease;
+  z-index: 3;
 }
 
 .match-player span {

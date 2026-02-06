@@ -66,6 +66,7 @@ export default function App() {
   const [eventCursor, setEventCursor] = useState(0);
   const [liveMinute, setLiveMinute] = useState(0);
   const [chatLog, setChatLog] = useState([]);
+  const [ballPos, setBallPos] = useState({ x: 50, y: 50 });
 
   const cardsById = useMemo(() => {
     const map = {};
@@ -153,6 +154,9 @@ export default function App() {
         if (event) {
           setLiveEvents((events) => [...events, event]);
           setLiveMinute(event.minute);
+          if (event.ball) {
+            setBallPos(event.ball);
+          }
         }
         if (nextIndex >= pendingMatch.timeline.length) {
           clearInterval(interval);
@@ -392,6 +396,7 @@ export default function App() {
     setLiveEvents([]);
     setEventCursor(0);
     setLiveMinute(0);
+    setBallPos({ x: 50, y: 50 });
     setChatLog([]);
   };
 
@@ -400,6 +405,7 @@ export default function App() {
     setLiveEvents([]);
     setEventCursor(0);
     setLiveMinute(0);
+    setBallPos({ x: 50, y: 50 });
   };
 
   const sendTaunt = (text) => {
@@ -884,16 +890,24 @@ export default function App() {
           {(matchPhase === "playing" || matchPhase === "finished") && pendingMatch && (
             <div className="match-live">
               <div className={`match-pitch ${matchPhase}`}>
+                <div className="goal goal-top" />
+                <div className="goal goal-bottom" />
+                <div
+                  className="match-ball"
+                  style={{ left: `${ballPos.x}%`, top: `${ballPos.y}%` }}
+                />
                 {pendingMatch.formationHome.slots.map((slot) => {
                   const lineupSlot = pendingMatch.homeTeam.lineup.find((item) => item.slotId === slot.positionKey);
                   const card = lineupSlot?.cardId ? cardsById[lineupSlot.cardId] : null;
+                  const driftX = (liveMinute % 6) - 3;
+                  const driftY = (liveMinute % 4) - 2;
                   return (
                     <div
                       key={slot.positionKey}
                       className="match-player home"
                       style={{
-                        left: `${slot.x}%`,
-                        top: `${slot.y}%`,
+                        left: `${slot.x + driftX}%`,
+                        top: `${slot.y + driftY}%`,
                         backgroundColor: pendingMatch.homeTeam.kit.home.shirt,
                         borderColor: pendingMatch.homeTeam.kit.home.shorts,
                       }}
@@ -905,13 +919,15 @@ export default function App() {
                 {pendingMatch.formationAway.slots.map((slot) => {
                   const lineupSlot = pendingMatch.awayTeam.lineup.find((item) => item.slotId === slot.positionKey);
                   const card = lineupSlot?.cardId ? cardsById[lineupSlot.cardId] : null;
+                  const driftX = ((liveMinute + 3) % 6) - 3;
+                  const driftY = ((liveMinute + 2) % 4) - 2;
                   return (
                     <div
                       key={slot.positionKey}
                       className="match-player away"
                       style={{
-                        left: `${slot.x}%`,
-                        top: `${slot.y}%`,
+                        left: `${slot.x + driftX}%`,
+                        top: `${slot.y + driftY}%`,
                         backgroundColor: pendingMatch.opponentKit.shirt,
                         borderColor: pendingMatch.opponentKit.shorts,
                       }}
@@ -953,7 +969,7 @@ export default function App() {
             <div className="match-chat">
               <h3>Match Words</h3>
               <div className="chat-buttons">
-                {["Snyggt", "Rematch?", "Du är bajs", "Jag kommer vinna"].map((text) => (
+                {["Snyggt", "Rematch?", "Du är bajs", "Jag kommer vinna", "Skit ner dig"].map((text) => (
                   <button key={text} onClick={() => sendTaunt(text)}>
                     {text}
                   </button>

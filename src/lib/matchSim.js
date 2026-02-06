@@ -158,7 +158,7 @@ export const buildMatchTimeline = ({
 }) => {
   const rand = seededRandom(seed ?? Date.now());
   const events = [
-    { minute: 1, type: "kickoff", text: `Kickoff! ${homeName} vs ${awayName}.` },
+    { minute: 1, type: "kickoff", text: `Kickoff! ${homeName} vs ${awayName}.`, ball: { x: 50, y: 50 } },
   ];
 
   scorersHome.forEach((scorer) => {
@@ -166,6 +166,8 @@ export const buildMatchTimeline = ({
       minute: scorer.minute,
       type: "goal",
       text: `${scorer.name} scores for ${homeName}!`,
+      team: "home",
+      ball: { x: 50 + Math.floor(rand() * 14) - 7, y: 12 + Math.floor(rand() * 6) },
     });
   });
 
@@ -174,6 +176,8 @@ export const buildMatchTimeline = ({
       minute: scorer.minute,
       type: "goal",
       text: `${scorer.name} scores for ${awayName}!`,
+      team: "away",
+      ball: { x: 50 + Math.floor(rand() * 14) - 7, y: 88 - Math.floor(rand() * 6) },
     });
   });
 
@@ -190,11 +194,16 @@ export const buildMatchTimeline = ({
   for (let i = 0; i < extraCount; i += 1) {
     const minute = Math.floor(rand() * 84) + 4;
     const text = flavor[Math.floor(rand() * flavor.length)];
-    events.push({ minute, type: "moment", text });
+    events.push({
+      minute,
+      type: "moment",
+      text,
+      ball: { x: 20 + Math.floor(rand() * 60), y: 25 + Math.floor(rand() * 50) },
+    });
   }
 
-  events.push({ minute: 45, type: "half", text: "Half-time whistle! Time for a breather." });
-  events.push({ minute: 90, type: "full", text: "Full-time! What a match." });
+  events.push({ minute: 45, type: "half", text: "Half-time whistle! Time for a breather.", ball: { x: 50, y: 50 } });
+  events.push({ minute: 90, type: "full", text: "Full-time! What a match.", ball: { x: 50, y: 50 } });
 
   const order = { kickoff: 0, goal: 1, moment: 2, half: 3, full: 4 };
   return events.sort((a, b) => {
